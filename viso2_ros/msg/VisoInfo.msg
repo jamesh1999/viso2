@@ -2,7 +2,7 @@
 # viso2 algorithm parameters
 # and results
 
-Header header
+std_msgs/Header header
 
 # True if the previous iteration of viso2
 # was not able to complete the matching process

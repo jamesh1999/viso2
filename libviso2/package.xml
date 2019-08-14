@@ -1,7 +1,9 @@
-<package>
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
   <name>libviso2</name>
   <version>0.0.1</version>
-  <description>This is a ROS-Package for libviso2, a library for visual odometry created by Andeas Geiger
+  <description>This is a ROS2-Package for libviso2, a library for visual odometry created by Andeas Geiger
     from the Institute of Measurement and Control Systems at Karlsruhe Institute of Technology.
 
     Apart from the original libviso2 sources, this package contains
@@ -22,7 +24,7 @@
   <author>Andreas Geiger</author>
   <author email="stephan.wirth@uib.es">Stephan Wirth</author>
 
-  <buildtool_depend>catkin</buildtool_depend>
+  <buildtool_depend>ament_cmake</buildtool_depend>
 
   <export>
     <cpp lflags="-L${prefix}/lib -Wl,-rpath,${prefix}/lib -lviso2" cflags="-I${prefix}/libviso2/src/"/>

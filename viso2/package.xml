@@ -1,8 +1,10 @@
-<package>
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
   <name>viso2</name>
   <version>0.0.1</version>
   <description>
-    A ROS-Wrapper for libviso2, a library for visual odometry, 
+    A ROS2-Wrapper for libviso2, a library for visual odometry, 
     maintained by the Systems, Robotics and Vision group of the 
     University of the Balearic Islands, Spain. http://srv.uib.es
   </description>
@@ -15,11 +17,11 @@
   <author email="stephan.wirth@uib.es">Stephan Wirth</author>
   <maintainer email="stephan.wirth@uib.es">Stephan Wirth</maintainer>
 
-  <buildtool_depend>catkin</buildtool_depend>
-  <run_depend>libviso2</run_depend>
-  <run_depend>viso2_ros</run_depend>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <exec_depend>libviso2</exec_depend>
+  <exec_depend>viso2_ros</exec_depend>
 
   <export>
-    <metapackage/>
+    <build_type>ament_cmake</build_type>
   </export>
 </package>
