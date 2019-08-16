@@ -37,18 +37,19 @@ public:
     // Read local parameters
     odometry_params::loadParams(this->shared_from_this(), visual_odometer_params_);
 
-    std::string image_topic;
-    this->declare_parameter("/mono_odometer/image", image_topic, "/image");
+    std::string image_topic = this->declare_parameter("/mono_odometer/image", "/image");
 
-    image_transport::ImageTransport it(this);
-    camera_sub_ = it.subscribe(image_topic, 1, std::bind(&MonoOdometerOmnidirectional::imageCallback, this));
+    image_transport::ImageTransport it(this->shared_from_this());
+
+    auto transport_hints = image_transport::TransportHints(this, transport);
+    camera_sub_ = it.subscribe(image_topic, 1, &MonoOdometerOmnidirectional::imageCallback, transport_hints);
 
     info_pub_ = this->create_publisher<viso2_ros::msg::VisoInfo>("info", 1);
   }
 
 protected:
 
-  void imageCallback(const sensor_msgs::msg::Image::ConstSharedPtr image_msg)
+  void imageCallback(const sensor_msgs::msg::Image::ConstSharedPtr& image_msg)
   {
     auto start_time = rclcpp::Clock().now();
  
@@ -114,7 +115,7 @@ protected:
       }
       else
       {
-        RCLPP_DEBUG(this->get_logger(), "Call to VisualOdometryMono::process() failed. Assuming motion too small.");
+        RCLCPP_DEBUG(this->get_logger(), "Call to VisualOdometryMono::process() failed. Assuming motion too small.");
         replace_ = true;
         tf2::Transform delta_transform;
         delta_transform.setIdentity();

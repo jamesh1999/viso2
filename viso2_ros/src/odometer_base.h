@@ -10,6 +10,8 @@
 #include <tf2_ros/transform_listener.h>
 #include <tf2_ros/transform_broadcaster.h>
 
+#include <tf2_helper.h>
+
 namespace viso2_ros
 {
 
@@ -55,9 +57,9 @@ public:
     tf_broadcaster_(this)
   {
     // Read local parameters
-    odom_frame_id_ = this->declare_parameter("odom_frame_id", std::string("/odom"));
-    base_link_frame_id_ = this->declare_parameter("base_link_frame_id", std::string("/base_link"));
-    sensor_frame_id_ = this->declare_parameter("sensor_frame_id", std::string("/camera"));
+    odom_frame_id_ = this->declare_parameter("odom_frame_id", "/odom");
+    base_link_frame_id_ = this->declare_parameter("base_link_frame_id", "/base_link");
+    sensor_frame_id_ = this->declare_parameter("sensor_frame_id", "/camera");
     publish_tf_ = this->declare_parameter("publish_tf", true);
     invert_tf_ = this->declare_parameter("invert_tf", false);
 
@@ -113,13 +115,18 @@ protected:
 
     // transform integrated pose to base frame
     geometry_msgs::msg::TransformStamped base_to_sensor;
+    tf2::Stamped<tf2::Transform> base_to_sensor_tf;
+
+    tf2::TimePoint time_point = tf2::TimePoint(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(timestamp.nanoseconds())));
+
     std::string error_msg;
-    if (tf_buffer_.canTransform(base_link_frame_id_, sensor_frame_id_, timestamp, &error_msg))
+    if (tf_buffer_.canTransform(base_link_frame_id_, sensor_frame_id_, time_point, &error_msg))
     {
-      tf_buffer_.lookupTransform(
+      base_to_sensor = tf_buffer_.lookupTransform(
           base_link_frame_id_,
           sensor_frame_id_,
-          timestamp, base_to_sensor);
+          time_point);
+    tf2::fromMsg(base_to_sensor, base_to_sensor_tf);
     }
     else
     {
@@ -128,20 +135,22 @@ protected:
                               base_link_frame_id_.c_str(),
                               sensor_frame_id_.c_str());
       RCLCPP_DEBUG(this->get_logger(), "Transform error: %s", error_msg.c_str());
-      base_to_sensor.setIdentity();
+      tf2::fromMsg(base_to_sensor, base_to_sensor_tf); 
+      base_to_sensor_tf.setIdentity();
     }
 
-    tf2::Transform base_transform = base_to_sensor * integrated_pose_ * base_to_sensor.inverse();
+    tf2::Transform base_transform = base_to_sensor_tf * integrated_pose_ * base_to_sensor_tf.inverse();
 
     nav_msgs::msg::Odometry odometry_msg;
     odometry_msg.header.stamp = timestamp;
     odometry_msg.header.frame_id = odom_frame_id_;
     odometry_msg.child_frame_id = base_link_frame_id_;
-    tf2::convert(base_transform, odometry_msg.pose.pose);
+
+    tf2::convert(tf2::toMsg<tf2::Transform, geometry_msgs::msg::Transform>(base_transform), odometry_msg.pose.pose);
 
     // calculate twist (not possible for first run as no delta_t can be computed)
-    tf2::Transform delta_base_transform = base_to_sensor * delta_transform * base_to_sensor.inverse();
-    if (!last_update_time_.is_zero())
+    tf2::Transform delta_base_transform = base_to_sensor_tf * delta_transform * base_to_sensor_tf.inverse();
+    if (last_update_time_.nanoseconds() != 0) 
     {
       double delta_t = (timestamp - last_update_time_).seconds();
       if (delta_t)
@@ -170,19 +179,22 @@ protected:
 
     pose_pub_->publish(pose_msg);
 
+    geometry_msgs::msg::TransformStamped tf_stamped_msg;
+    tf_stamped_msg.header.stamp = timestamp;
+    tf_stamped_msg.header.frame_id = odom_frame_id_;
+    tf_stamped_msg.child_frame_id = base_link_frame_id_;
+
     if (publish_tf_)
     {
       if (invert_tf_)
       {
-        tf_broadcaster_.sendTransform(
-            geometry_msgs::msg::TransformStamped(base_transform.inverse(), timestamp,
-	    base_link_frame_id_, odom_frame_id_));
+        tf_stamped_msg.transform = tf2::toMsg<tf2::Transform, geometry_msgs::msg::Transform>(base_transform.inverse());
+        tf_broadcaster_.sendTransform(tf_stamped_msg);
       }
       else
       {
-        tf_broadcaster_.sendTransform(
-            geometry_msgs::msg::TransformStamped(base_transform, timestamp,
-            odom_frame_id_, base_link_frame_id_));
+        tf_stamped_msg.transform = tf2::toMsg<tf2::Transform, geometry_msgs::msg::Transform>(base_transform);
+        tf_broadcaster_.sendTransform(tf_stamped_msg);
       }
     }
 
@@ -190,7 +202,7 @@ protected:
   }
 
 
-  bool resetPose(std_srvs::srv::Empty::Request::SharedPtr, std_srvs::srv::Empty::Response::SharedPtr)
+  bool resetPose(const std_srvs::srv::Empty::Request::SharedPtr, const std_srvs::srv::Empty::Response::SharedPtr&)
   {
     integrated_pose_.setIdentity();
     return true;

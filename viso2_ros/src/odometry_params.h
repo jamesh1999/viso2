@@ -195,6 +195,7 @@ std::ostream& operator<<(std::ostream& out, const VisualOdometry::omnidirectiona
   out << "  fy           = " << params.fy << std::endl;
   out << "  cx           = " << params.cx << std::endl;
   out << "  cy           = " << params.cy << std::endl;
+  return out;
 }
 
 std::ostream& operator<<(std::ostream& out, const VisualOdometry::bucketing& bucketing)

@@ -37,7 +37,9 @@ public:
     odometry_params::loadParams(this->shared_from_this(), visual_odometer_params_);
 
     image_transport::ImageTransport it(this->shared_from_this());
-    camera_sub_ = it.subscribeCamera("image", 1, &MonoOdometer::imageCallback, this, transport);
+    
+    auto transport_hints = image_transport::TransportHints(this, transport);
+    camera_sub_ = it.subscribeCamera("image", 1, &MonoOdometer::imageCallback, transport_hints);
 
     info_pub_ = this->create_publisher<viso2_ros::msg::VisoInfo>("info", 1);
   }
@@ -45,8 +47,8 @@ public:
 protected:
 
   void imageCallback(
-      const sensor_msgs::msg::Image::ConstSharedPtr image_msg,
-      const sensor_msgs::msg::CameraInfo::ConstSharedPtr info_msg)
+      const sensor_msgs::msg::Image::ConstSharedPtr& image_msg,
+      const sensor_msgs::msg::CameraInfo::ConstSharedPtr& info_msg)
   {
     auto start_time = rclcpp::Clock().now();
  
