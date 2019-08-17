@@ -15,7 +15,7 @@
 namespace viso2_ros
 {
 
-class MonoOdometer : public OdometerBase
+class MonoOdometer : public rclcpp::Node, public OdometerBase
 {
 
 private:
@@ -30,22 +30,20 @@ private:
   bool replace_;
 
 public:
-
-  MonoOdometer(const std::string& transport, rclcpp::NodeOptions& options) : OdometerBase("mono_odometer_node", options), replace_(false)
+  MonoOdometer(const std::string& transport, const rclcpp::NodeOptions& options) :
+  rclcpp::Node("mono_odometer_node", options),
+  OdometerBase(this->shared_from_this()),
+  replace_(false)
   {
     // Read local parameters
     odometry_params::loadParams(this->shared_from_this(), visual_odometer_params_);
-
-    image_transport::ImageTransport it(this->shared_from_this());
     
-    auto transport_hints = image_transport::TransportHints(this, transport);
-    camera_sub_ = it.subscribeCamera("image", 1, &MonoOdometer::imageCallback, transport_hints);
-
+    rmw_qos_profile_t custom_qos = rmw_qos_profile_default;
+    camera_sub_ = image_transport::create_camera_subscription(this, "image", [&](auto& image_msg, auto& camera_info_msg) { this->imageCallback(image_msg, camera_info_msg); }, transport, custom_qos);
     info_pub_ = this->create_publisher<viso2_ros::msg::VisoInfo>("info", 1);
   }
 
 protected:
-
   void imageCallback(
       const sensor_msgs::msg::Image::ConstSharedPtr& image_msg,
       const sensor_msgs::msg::CameraInfo::ConstSharedPtr& info_msg)
@@ -71,7 +69,7 @@ protected:
 
     // convert image if necessary
     uint8_t *image_data;
-    uint32_t step;
+    int step;
     cv_bridge::CvImageConstPtr cv_ptr;
     if (image_msg->encoding == sensor_msgs::image_encodings::MONO8)
     {
@@ -86,7 +84,7 @@ protected:
     }
 
     // run the odometer
-    uint32_t dims[] = {image_msg->width, image_msg->height, step};
+    int32_t dims[] = {(int32_t)image_msg->width, (int32_t)image_msg->height, step};
     // on first run, only feed the odometer with first image pair without
     // retrieving data
     if (first_run)

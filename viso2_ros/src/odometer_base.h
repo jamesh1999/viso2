@@ -20,10 +20,12 @@ namespace viso2_ros
  * publishing. This can be used as base for any incremental pose estimating
  * sensor. Sensors that measure velocities cannot be used.
  */
-class OdometerBase : public rclcpp::Node
+class OdometerBase
 {
-
 private:
+
+  // private node handle
+  rclcpp::Node::SharedPtr node_;
 
   // publisher
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
@@ -51,25 +53,26 @@ private:
 
 public:
 
-  OdometerBase(const std::string node_name, const rclcpp::NodeOptions & options) : 
-    rclcpp::Node(node_name, options),
-    tf_buffer_(this->get_clock()),
-    tf_broadcaster_(this)
+  OdometerBase(const rclcpp::Node::SharedPtr node) : 
+    tf_buffer_(node_->get_clock()),
+    tf_broadcaster_(node_)
   {
+    node_ = node;
     // Read local parameters
-    odom_frame_id_ = this->declare_parameter("odom_frame_id", "/odom");
-    base_link_frame_id_ = this->declare_parameter("base_link_frame_id", "/base_link");
-    sensor_frame_id_ = this->declare_parameter("sensor_frame_id", "/camera");
-    publish_tf_ = this->declare_parameter("publish_tf", true);
-    invert_tf_ = this->declare_parameter("invert_tf", false);
+    odom_frame_id_ = node_->declare_parameter("odom_frame_id", "/odom");
+    base_link_frame_id_ = node_->declare_parameter("base_link_frame_id", "/base_link");
+    sensor_frame_id_ = node_->declare_parameter("sensor_frame_id", "/camera");
+    publish_tf_ = node_->declare_parameter("publish_tf", true);
+    invert_tf_ = node_->declare_parameter("invert_tf", false);
 
-    RCLCPP_INFO(this->get_logger(), "Basic Odometer Settings: odom_frame_id = %s \n base_link_frame_id = %s \n publish_tf = %s \n invert_tf = %s", odom_frame_id_.c_str(), base_link_frame_id_.c_str(), (publish_tf_?"true":"false"), (invert_tf_?"true":"false"));
+    RCLCPP_INFO(node_->get_logger(), "Basic Odometer Settings: odom_frame_id = %s \n base_link_frame_id = %s \n publish_tf = %s \n invert_tf = %s", odom_frame_id_.c_str(), base_link_frame_id_.c_str(), (publish_tf_?"true":"false"), (invert_tf_?"true":"false"));
 
     // advertise
-    odom_pub_ = this->create_publisher<nav_msgs::msg::Odometry>("odometry", 1);
-    pose_pub_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("pose", 1);
-
-    reset_service_ = this->create_service<std_srvs::srv::Empty>("reset_pose", &OdometerBase::resetPose);
+    odom_pub_ = node_->create_publisher<nav_msgs::msg::Odometry>("odometry", 1);
+    pose_pub_ = node_->create_publisher<geometry_msgs::msg::PoseStamped>("pose", 1);
+    
+    //[&](auto& request, auto&response) { this->resetPose(request, response); }
+    reset_service_ = node_->create_service<std_srvs::srv::Empty>("reset_pose", [&](auto& request, auto&response) { this->resetPose(request, response); });
 
     integrated_pose_.setIdentity();
 
@@ -78,6 +81,11 @@ public:
   }
 
 protected:
+
+  void resetPose(const std::shared_ptr<std_srvs::srv::Empty::Request>, const std::shared_ptr<std_srvs::srv::Empty::Response>)
+  {
+    integrated_pose_.setIdentity();
+  }
 
   void setSensorFrameId(const std::string& frame_id)
   {
@@ -103,12 +111,12 @@ protected:
   {
     if (sensor_frame_id_.empty())
     {
-      RCLCPP_ERROR(this->get_logger(), "[odometer] update called with unknown sensor frame id!");
+      RCLCPP_ERROR(node_->get_logger(), "[odometer] update called with unknown sensor frame id!");
       return;
     }
     if (timestamp < last_update_time_)
     {
-      RCLCPP_WARN(this->get_logger(), "[odometer] saw negative time change in incoming sensor data, resetting pose.");
+      RCLCPP_WARN(node_->get_logger(), "[odometer] saw negative time change in incoming sensor data, resetting pose.");
       integrated_pose_.setIdentity();
     }
     integrated_pose_ *= delta_transform;
@@ -130,11 +138,11 @@ protected:
     }
     else
     {
-      RCLCPP_WARN(this->get_logger(), "10.0 The tf from '%s' to '%s' does not seem to be available, "
+      RCLCPP_WARN(node_->get_logger(), "10.0 The tf from '%s' to '%s' does not seem to be available, "
                               "will assume it as identity!",
                               base_link_frame_id_.c_str(),
                               sensor_frame_id_.c_str());
-      RCLCPP_DEBUG(this->get_logger(), "Transform error: %s", error_msg.c_str());
+      RCLCPP_DEBUG(node_->get_logger(), "Transform error: %s", error_msg.c_str());
       tf2::fromMsg(base_to_sensor, base_to_sensor_tf); 
       base_to_sensor_tf.setIdentity();
     }
@@ -199,13 +207,6 @@ protected:
     }
 
     last_update_time_ = timestamp;
-  }
-
-
-  bool resetPose(const std_srvs::srv::Empty::Request::SharedPtr, const std_srvs::srv::Empty::Response::SharedPtr&)
-  {
-    integrated_pose_.setIdentity();
-    return true;
   }
 
 };

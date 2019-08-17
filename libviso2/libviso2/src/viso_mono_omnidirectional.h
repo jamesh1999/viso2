@@ -28,7 +28,7 @@ public:
   VisualOdometryMonoOmnidirectional (parameters param);
 
   // deconstructor
-  ~VisualOdometryMonoOmnidirectional ();
+  virtual ~VisualOdometryMonoOmnidirectional ();
 
   // process a new image, pushs the image back to an internal ring buffer.
   // valid motion estimates are available after calling process for two times.

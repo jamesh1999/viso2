@@ -23,11 +23,9 @@ Street, Fifth Floor, Boston, MA 02110-1301, USA
 
 using namespace std;
 
-VisualOdometryMono::VisualOdometryMono (parameters param) : param(param), VisualOdometry((VisualOdometry::parameters)param) {
-}
+VisualOdometryMono::VisualOdometryMono (parameters param) : param(param), VisualOdometry((VisualOdometry::parameters)param) {}
 
-VisualOdometryMono::~VisualOdometryMono () {
-}
+VisualOdometryMono::~VisualOdometryMono () {}
 
 bool VisualOdometryMono::process (uint8_t *I,int32_t* dims,bool replace) {
   matcher->pushBack(I,dims,replace);
