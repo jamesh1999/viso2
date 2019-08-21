@@ -13,6 +13,7 @@
 
 namespace viso2_ros
 {
+  using namespace std::chrono_literals;
 
 /**
  * This is an abstract base class for stereo image processing nodes.
@@ -36,8 +37,9 @@ private:
   std::shared_ptr<ApproximateSync> approximate_sync_;
   int queue_size_;
 
+  rclcpp::Node::SharedPtr node_;
+
   // for sync checking
-  rclcpp::WallTimer check_synced_timer_;
   int left_received_, right_received_, left_info_received_, right_info_received_, all_received_;
 
   // for sync checking
@@ -64,7 +66,7 @@ private:
     int threshold = 3 * all_received_;
     if (left_received_ >= threshold || right_received_ >= threshold ||
         left_info_received_ >= threshold || right_info_received_ >= threshold) {
-      RCLCPP_WARN(this->get_logger(), "[stereo_processor] Low number of synchronized left/right/left_info/right_info tuples received.\n"
+      RCLCPP_WARN(node_->get_logger(), "[stereo_processor] Low number of synchronized left/right/left_info/right_info tuples received.\n"
                "Left images received:       %d (topic '%s')\n"
                "Right images received:      %d (topic '%s')\n"
                "Left camera info received:  %d (topic '%s')\n"
@@ -72,7 +74,7 @@ private:
                "Synchronized tuples: %d\n"
                "Possible issues:\n"
                "\t* stereo_image_proc is not running.\n"
-               "\t  Does `rosnode info %s` show any connections?\n"
+               "\t  Does `ros2 node info %s` show any connections?\n"
                "\t* The cameras are not synchronized.\n"
                "\t  Try restarting the node with parameter _approximate_sync:=True\n"
                "\t* The network is too slow. One or more images are dropped from each tuple.\n"
@@ -81,7 +83,7 @@ private:
                right_received_, right_sub_.getTopic().c_str(),
                left_info_received_, left_info_sub_.getTopic().c_str(),
                right_info_received_, right_info_sub_.getTopic().c_str(),
-               all_received_, nh->get_name().c_str(), queue_size_);
+               all_received_, node_->get_name(), queue_size_);
     }
   }
 
@@ -93,14 +95,18 @@ protected:
    * callbacks.
    * \param transport The image transport to use
    */
-  StereoProcessor(const std::string& transport) :
-    left_received_(0), right_received_(0), left_info_received_(0), right_info_received_(0), all_received_(0)
+  StereoProcessor(const std::string& transport, const rclcpp::Node::SharedPtr node) :
+    left_received_(0), 
+    right_received_(0), 
+    left_info_received_(0), 
+    right_info_received_(0), 
+    all_received_(0)
   {
-    // Read local parameters
-    auto local_nh = std::make_shared<rclcpp::Node>();
+
+    // Assign node
+    node_ = node;
 
     // Resolve topic names
-    auto nh = std::make_shared<rclcpp::Node>();
     std::string stereo_ns = "stereo";
     std::string left_topic = "/left/image";
     std::string right_topic = stereo_ns + "/right/image";
@@ -109,49 +115,53 @@ protected:
     std::string right_info_topic = stereo_ns + "/right/camera_info";
 
     // Subscribe to four input topics.
-    RCLCPP_INFO(nh->get_logger(), "Subscribing to:\n\t* %s\n\t* %s\n\t* %s\n\t* %s",
+    RCLCPP_INFO(node_->get_logger(), "Subscribing to:\n\t* %s\n\t* %s\n\t* %s\n\t* %s",
         left_topic.c_str(), right_topic.c_str(),
         left_info_topic.c_str(), right_info_topic.c_str());
 
-    image_transport::ImageTransport it(nh);
-    left_sub_.subscribe(it, left_topic, 3, transport);
-    right_sub_.subscribe(it, right_topic, 3, transport);
-    left_info_sub_.subscribe(nh, left_info_topic, 3);
-    right_info_sub_.subscribe(nh, right_info_topic, 3);
+    rmw_qos_profile_t custom_qos = rmw_qos_profile_default;
+    custom_qos.depth = 3;
+
+    image_transport::ImageTransport it(node_);
+    left_sub_.subscribe(node_.get(), left_topic, transport, custom_qos);
+    right_sub_.subscribe(node_.get(), right_topic, transport, custom_qos);
+    left_info_sub_.subscribe(it, left_info_topic, transport, custom_qos);
+    right_info_sub_.subscribe(it, right_info_topic, transport, custom_qos);
+
+    //left_sub_ = image_transport::create_subscription(node_.get(), left_topic, std::bind(StereoProcessor::increment, &left_received_), transport, custom_qos);
+    //right_sub_ = image_transport::create_subscription(node_.get(), right_topic, std::bind(StereoProcessor::increment, &right_received_), transport, custom_qos);
+    //left_info_sub_ = image_transport::create_subscription(node_.get(), left_info_topic, std::bind(StereoProcessor::increment, &left_info_received_), transport, custom_qos);
+    //right_info_sub_ = image_transport::create_subscription(node_.get(), right_info_topic, std::bind(StereoProcessor::increment, &right_info_received_), transport, custom_qos);
 
     // Complain every 15s if the topics appear unsynchronized
-    left_sub_.registerCallback(std::bind(StereoProcessor::increment, &left_received_));
-    right_sub_.registerCallback(std::bind(StereoProcessor::increment, &right_received_));
-    left_info_sub_.registerCallback(std::bind(StereoProcessor::increment, &left_info_received_));
-    right_info_sub_.registerCallback(std::bind(StereoProcessor::increment, &right_info_received_));
-    check_synced_timer_ = nh->createWallTimer(rclcpp::Duration(15.0),
+    auto check_synced_timer_ = node_->create_wall_timer(15s,
                                              std::bind(&StereoProcessor::checkInputsSynchronized, this));
 
     // Synchronize input topics. Optionally do approximate synchronization.
-    auto queue_size_ = local_nh->declare_parameter("queue_size", 5);
+    auto queue_size_ = node_->declare_parameter("queue_size", 5);
     bool approx;
-    approx = local_nh->declare_parameter("approximate_sync", false);
+    approx = node_->declare_parameter("approximate_sync", false);
     if (approx)
     {
       approximate_sync_.reset(new ApproximateSync(ApproximatePolicy(queue_size_),
                                                   left_sub_, right_sub_, left_info_sub_, right_info_sub_) );
-      approximate_sync_->registerCallback(std::bind(&StereoProcessor::dataCb, this, _1, _2, _3, _4));
+      approximate_sync_->registerCallback(std::bind(&StereoProcessor::dataCb, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
     }
     else
     {
       exact_sync_.reset(new ExactSync(ExactPolicy(queue_size_),
                                       left_sub_, right_sub_, left_info_sub_, right_info_sub_) );
-      exact_sync_->registerCallback(std::bind(&StereoProcessor::dataCb, this, _1, _2, _3, _4));
+      exact_sync_->registerCallback(std::bind(&StereoProcessor::dataCb, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
     }
   }
 
   /**
    * Implement this method in sub-classes
    */
-  virtual void imageCallback(const sensor_msgs::msg::Image::SharedConstPtr l_image_msg,
-                             const sensor_msgs::msg::Image::SharedConstPtr r_image_msg,
-                             const sensor_msgs::msg::CameraInfo::SharedConstPtr l_info_msg,
-                             const sensor_msgs::msg::CameraInfo::SharedConstPtr r_info_msg) = 0;
+  virtual void imageCallback(const sensor_msgs::msg::Image::ConstSharedPtr l_image_msg,
+                             const sensor_msgs::msg::Image::ConstSharedPtr r_image_msg,
+                             const sensor_msgs::msg::CameraInfo::ConstSharedPtr l_info_msg,
+                             const sensor_msgs::msg::CameraInfo::ConstSharedPtr r_info_msg) = 0;
 
 };
 

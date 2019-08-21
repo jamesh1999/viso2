@@ -22,7 +22,7 @@ Street, Fifth Floor, Boston, MA 02110-1301, USA
 
 using namespace std;
 
-VisualOdometryMonoOmnidirectional::VisualOdometryMonoOmnidirectional (parameters param) : param(param), VisualOdometry((VisualOdometry::parameters)param) {}
+VisualOdometryMonoOmnidirectional::VisualOdometryMonoOmnidirectional (parameters param) : VisualOdometry((VisualOdometry::parameters)param), param(param) {}
 
 VisualOdometryMonoOmnidirectional::~VisualOdometryMonoOmnidirectional () {
 }

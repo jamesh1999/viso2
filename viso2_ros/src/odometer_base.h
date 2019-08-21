@@ -54,8 +54,8 @@ private:
 public:
 
   OdometerBase(const rclcpp::Node::SharedPtr node) : 
-    tf_buffer_(node_->get_clock()),
-    tf_broadcaster_(node_)
+    tf_buffer_(node->get_clock()),
+    tf_broadcaster_(node)
   {
     node_ = node;
     // Read local parameters
@@ -72,7 +72,8 @@ public:
     pose_pub_ = node_->create_publisher<geometry_msgs::msg::PoseStamped>("pose", 1);
     
     //[&](auto& request, auto&response) { this->resetPose(request, response); }
-    reset_service_ = node_->create_service<std_srvs::srv::Empty>("reset_pose", [&](auto& request, auto&response) { this->resetPose(request, response); });
+
+    reset_service_ = node_->create_service<std_srvs::srv::Empty>("reset_pose", std::bind(&OdometerBase::resetPose, this, std::placeholders::_1, std::placeholders::_2));
 
     integrated_pose_.setIdentity();
 
