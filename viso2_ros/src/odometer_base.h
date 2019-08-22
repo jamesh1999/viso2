@@ -55,7 +55,7 @@ public:
 
   OdometerBase(const rclcpp::Node::SharedPtr node) : 
     tf_buffer_(node->get_clock()),
-    tf_broadcaster_(node)
+    tf_broadcaster_(*node)
   {
     node_ = node;
     // Read local parameters

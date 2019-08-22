@@ -15,6 +15,7 @@ find_package(ament_cmake REQUIRED)
 find_package(libviso2 REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(pcl_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(message_filters REQUIRED)
@@ -22,7 +23,7 @@ find_package(image_transport REQUIRED)
 find_package(cv_bridge REQUIRED)
 find_package(image_geometry REQUIRED)
 find_package(tf2 REQUIRED)
-#find_package(pcl_ros REQUIRED)
+find_package(pcl_conversions REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(rosidl_cmake REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
@@ -36,31 +37,34 @@ rosidl_generate_interfaces(${PROJECT_NAME}
 
 
 include_directories(src 
+    ${pcl_conversions_INCLUDE_DIRS}
     ${libviso2_INCLUDE_DIRS}
     ${cv_bridge_INCLUDE_DIRS}
     ${PCL_INCLUDE_DIRS}
 )
 
-add_executable(stereo_odometer
-  src/stereo_odometer.cpp)
+#add_executable(stereo_odometer
+#  src/stereo_odometer.cpp)
 
-ament_target_dependencies(stereo_odometer
-    "libviso2"
-    "rclcpp"
-    "sensor_msgs"
-    "std_msgs"
-    "nav_msgs"
-    "cv_bridge"
-    "message_filters"
-    "image_transport"
-    "image_geometry"
-    "tf2"
-    #"pcl_ros"
-    "OpenCV")
+#ament_target_dependencies(stereo_odometer
+#    "libviso2"
+#    "rclcpp"
+#   "sensor_msgs"
+#    "std_msgs"
+#    "pcl_msgs"
+#    "nav_msgs"
+#    "cv_bridge"
+#    "message_filters"
+#    "image_transport"
+#    "image_geometry"
+#    "tf2"
+#    "pcl_conversions"
+#    #"pcl_ros"
+#    "OpenCV")
 
 
-rosidl_target_interfaces(stereo_odometer
-      viso2_ros "rosidl_typesupport_cpp")
+#rosidl_target_interfaces(stereo_odometer
+#      viso2_ros "rosidl_typesupport_cpp")
 
 add_executable(mono_odometer
   src/mono_odometer.cpp)
@@ -102,14 +106,14 @@ ament_target_dependencies(mono_odometer_omnidirectional
 rosidl_target_interfaces(mono_odometer_omnidirectional
       ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
-target_link_libraries(stereo_odometer ${OpenCV_LIBRARIES})
+#target_link_libraries(stereo_odometer ${OpenCV_LIBRARIES})
 
 target_link_libraries(mono_odometer ${OpenCV_LIBRARIES})
 
 target_link_libraries(mono_odometer_omnidirectional ${OpenCV_LIBRARIES})
 
 install(TARGETS
-  stereo_odometer
+  #stereo_odometer
   mono_odometer
   mono_odometer_omnidirectional
 DESTINATION lib/${PROJECT_NAME})
