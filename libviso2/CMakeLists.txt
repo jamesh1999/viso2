@@ -12,7 +12,7 @@ endif()
 
 find_package(ament_cmake REQUIRED)
 
-add_library(viso2
+add_library(${PROJECT_NAME}
   libviso2/src/filter.cpp
   libviso2/src/matcher.cpp
   libviso2/src/matrix.cpp
@@ -23,16 +23,11 @@ add_library(viso2
   libviso2/src/viso_mono_omnidirectional.cpp
   libviso2/src/viso_stereo.cpp)
 
-install(TARGETS viso2
+install(TARGETS ${PROJECT_NAME}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
 )
-
-#install(DIRECTORY ${PROJECT_NAME}/src
-#  DESTINATION include
-#  PATTERN ".cpp" EXCLUDE
-#)
 
 install(DIRECTORY ${PROJECT_NAME}/src/ DESTINATION include
         FILES_MATCHING PATTERN "*.h")
