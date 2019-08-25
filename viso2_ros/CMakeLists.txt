@@ -23,6 +23,9 @@ find_package(image_transport REQUIRED)
 find_package(cv_bridge REQUIRED)
 find_package(image_geometry REQUIRED)
 find_package(tf2 REQUIRED)
+find_package(tf2_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
 find_package(pcl_conversions REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(rosidl_cmake REQUIRED)
@@ -75,6 +78,10 @@ ament_target_dependencies(mono_odometer
   "sensor_msgs"
   "std_msgs"
   "nav_msgs"
+  "tf2_msgs"
+  "std_srvs"
+  "geometry_msgs"
+  "tf2_geometry_msgs"
   "cv_bridge"
   "message_filters"
   "image_transport"
@@ -94,7 +101,11 @@ ament_target_dependencies(mono_odometer_omnidirectional
   "rclcpp"
   "sensor_msgs"
   "std_msgs"
+  "std_srvs"
   "nav_msgs"
+  "tf2_msgs"
+  "geometry_msgs"
+  "tf2_geometry_msgs"
   "cv_bridge"
   "message_filters"
   "image_transport"

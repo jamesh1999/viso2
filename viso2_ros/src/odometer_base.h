@@ -5,10 +5,12 @@
 #include <rclcpp/rclcpp.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
+
 #include <std_srvs/srv/empty.hpp>
 
 #include <tf2_ros/transform_listener.h>
 #include <tf2_ros/transform_broadcaster.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 #include <tf2_helper.h>
 
@@ -144,6 +146,7 @@ protected:
                               base_link_frame_id_.c_str(),
                               sensor_frame_id_.c_str());
       RCLCPP_DEBUG(node_->get_logger(), "Transform error: %s", error_msg.c_str());
+
       tf2::fromMsg(base_to_sensor, base_to_sensor_tf); 
       base_to_sensor_tf.setIdentity();
     }
@@ -155,7 +158,18 @@ protected:
     odometry_msg.header.frame_id = odom_frame_id_;
     odometry_msg.child_frame_id = base_link_frame_id_;
 
-    tf2::convert(tf2::toMsg<tf2::Transform, geometry_msgs::msg::Transform>(base_transform), odometry_msg.pose.pose);
+    // TODO use tf2 solution instead of setting explicitly
+    odometry_msg.pose.pose.orientation.x = base_transform.getRotation().getX();
+    odometry_msg.pose.pose.orientation.y = base_transform.getRotation().getY();
+    odometry_msg.pose.pose.orientation.z = base_transform.getRotation().getZ();
+    odometry_msg.pose.pose.orientation.w = base_transform.getRotation().getW();
+
+    odometry_msg.pose.pose.position.x = base_transform.getOrigin().getX();
+    odometry_msg.pose.pose.position.y = base_transform.getOrigin().getY();
+    odometry_msg.pose.pose.position.z = base_transform.getOrigin().getZ();
+
+
+    //tf2::convert(base_transform, odometry_msg.pose.pose);
 
     // calculate twist (not possible for first run as no delta_t can be computed)
     tf2::Transform delta_base_transform = base_to_sensor_tf * delta_transform * base_to_sensor_tf.inverse();
@@ -193,16 +207,21 @@ protected:
     tf_stamped_msg.header.frame_id = odom_frame_id_;
     tf_stamped_msg.child_frame_id = base_link_frame_id_;
 
+
+    tf2::Stamped<tf2::Transform> base_transform_stamped;
+
     if (publish_tf_)
     {
       if (invert_tf_)
       {
-        tf_stamped_msg.transform = tf2::toMsg<tf2::Transform, geometry_msgs::msg::Transform>(base_transform.inverse());
+        base_transform_stamped.setData(base_transform.inverse());
+        tf_stamped_msg.transform = tf2::toMsg(base_transform_stamped);
         tf_broadcaster_.sendTransform(tf_stamped_msg);
       }
       else
       {
-        tf_stamped_msg.transform = tf2::toMsg<tf2::Transform, geometry_msgs::msg::Transform>(base_transform);
+        base_transform_stamped.setData(base_transform);
+        tf_stamped_msg.transform = tf2::toMsg(base_transform_stamped);
         tf_broadcaster_.sendTransform(tf_stamped_msg);
       }
     }
