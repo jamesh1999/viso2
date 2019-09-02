@@ -17,7 +17,6 @@ namespace viso2_ros
 
 class MonoOdometer : public OdometerBase
 {
-
 private:
 
   std::shared_ptr<VisualOdometryMono> visual_odometer_;
@@ -31,17 +30,19 @@ private:
   bool replace_;
 
 public:
-  MonoOdometer(const std::string& transport, const rclcpp::Node::SharedPtr node) :
+  MonoOdometer(const rclcpp::Node::SharedPtr node) :
   OdometerBase(node),
   replace_(false)
   {
     node_ = node;
 
     // Read local parameters
+    std::string transport = node_->declare_parameter("transport", "raw");
+    std::string image_topic = node_->declare_parameter("image_topic", "/image_rect");
     odometry_params::loadParams(node_, visual_odometer_params_);
     
     rmw_qos_profile_t custom_qos = rmw_qos_profile_default;
-    camera_sub_ = image_transport::create_camera_subscription(node_.get(), "image", [&](auto& image_msg, auto& camera_info_msg) { this->imageCallback(image_msg, camera_info_msg); }, transport, custom_qos);
+    camera_sub_ = image_transport::create_camera_subscription(node_.get(), image_topic, [&](auto& image_msg, auto& camera_info_msg) { this->imageCallback(image_msg, camera_info_msg); }, transport, custom_qos);
     info_pub_ = node_->create_publisher<viso2_ros::msg::VisoInfo>("info", 1);
   }
 
@@ -154,11 +155,9 @@ int main(int argc, char **argv)
              ros::names::remap("image").c_str());
   }*/
 
-  std::string transport = argc > 1 ? argv[1] : "raw";
-
   rclcpp::NodeOptions options;
   auto node = std::make_shared<rclcpp::Node>("mono_odometer_node", options);
-  auto odometer = std::make_shared<viso2_ros::MonoOdometer>(transport, node);
+  auto odometer = std::make_shared<viso2_ros::MonoOdometer>(node);
   
   exec.add_node(node);
 

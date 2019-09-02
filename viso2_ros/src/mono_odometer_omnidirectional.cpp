@@ -33,7 +33,7 @@ private:
 
 public:
 
-  MonoOdometerOmnidirectional(const std::string& transport, const rclcpp::Node::SharedPtr node) : 
+  MonoOdometerOmnidirectional(const rclcpp::Node::SharedPtr node) : 
   OdometerBase(node), 
   replace_(false)
   {
@@ -42,7 +42,9 @@ public:
     // Read local parameters
     odometry_params::loadParams(node_, visual_odometer_params_);
 
-    std::string image_topic = node_->declare_parameter("/mono_odometer/image", "/image");
+    std::string transport = node_->declare_parameter("image_topic", "/image_rect");
+    std::string image_topic = node_->declare_parameter("transport", "raw");
+
     rmw_qos_profile_t custom_qos = rmw_qos_profile_default;
     
     camera_sub_ = image_transport::create_subscription(node_.get(), image_topic, [&](auto& image_msg) { this->imageCallback(image_msg); }, transport, custom_qos);
@@ -153,11 +155,9 @@ int main(int argc, char **argv)
              ros::names::remap("image").c_str());
   }*/
 
-  std::string transport = argc > 1 ? argv[1] : "raw";
-
   rclcpp::NodeOptions options;
   auto node = std::make_shared<rclcpp::Node>("mono_odometer_omnidirectional_node", options);
-  auto odometer = std::make_shared<viso2_ros::MonoOdometerOmnidirectional>(transport, node);
+  auto odometer = std::make_shared<viso2_ros::MonoOdometerOmnidirectional>(node);
   
   exec.add_node(node);
 
