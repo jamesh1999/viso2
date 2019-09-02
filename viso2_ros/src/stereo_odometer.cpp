@@ -45,7 +45,7 @@ static const std::array<double, 36> BAD_COVARIANCE =
     0, 0, 0, 0, 0, 9999 } };
 
 
-class StereoOdometer : public rclcpp::Node, public StereoProcessor, public OdometerBase
+class StereoOdometer : public StereoProcessor, public OdometerBase
 {
 
 private:
@@ -53,6 +53,7 @@ private:
   std::shared_ptr<VisualOdometryStereo> visual_odometer_;
   VisualOdometryStereo::parameters visual_odometer_params_;
 
+  rclcpp::Node::SharedPtr node_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr point_cloud_pub_;
   rclcpp::Publisher<viso2_ros::msg::VisoInfo>::SharedPtr info_pub_;
 
@@ -67,22 +68,25 @@ private:
 
 public:
 
-  StereoOdometer(const std::string& transport, const rclcpp::NodeOptions& options) :
-    Node("stereo_odometer_node", options),
-    StereoProcessor(transport, this->shared_from_this()), 
-    OdometerBase(this->shared_from_this()),
+  StereoOdometer(const rclcpp::Node::SharedPtr node) :
+    StereoProcessor(transport, node), 
+    OdometerBase(node),
     got_lost_(false), 
     change_reference_frame_(false)
   {
+
+    node_ = node;
     // Read local parameters
-    odometry_params::loadParams(this->shared_from_this(), visual_odometer_params_);
+    odometry_params::loadParams(node_, visual_odometer_params_);
 
-    auto ref_frame_change_method_ = this->declare_parameter("ref_frame_change_method", 0);
-    auto ref_frame_motion_threshold_ = this->declare_parameter("ref_frame_motion_threshold", 5.0);
-    auto ref_frame_inlier_threshold_ = this->declare_parameter("ref_frame_inlier_threshold", 150);
+    auto transport = node_->declare_parameter("transport", "raw");
 
-    point_cloud_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("point_cloud", 1);
-    info_pub_ = this->create_publisher<viso2_ros::msg::VisoInfo>("info", 1);
+    auto ref_frame_change_method_ = node_->declare_parameter("ref_frame_change_method", 0);
+    auto ref_frame_motion_threshold_ = node_->declare_parameter("ref_frame_motion_threshold", 5.0);
+    auto ref_frame_inlier_threshold_ = node_->declare_parameter("ref_frame_inlier_threshold", 150);
+
+    point_cloud_pub_ = node_->create_publisher<sensor_msgs::msg::PointCloud2>("point_cloud", 1);
+    info_pub_ = node_->create_publisher<viso2_ros::msg::VisoInfo>("info", 1);
 
     reference_motion_ = Matrix::eye(4);
   }
@@ -338,12 +342,11 @@ int main(int argc, char **argv)
              ros::names::remap("image").c_str());
   }*/
 
-  std::string transport = argc > 1 ? argv[1] : "raw";
-
   rclcpp::NodeOptions options;
-  auto odometer = std::make_shared<viso2_ros::StereoOdometer>(transport, options);
+  auto node = std::make_shared<rclcpp::Node>("stereo_odometer_node", options)
+  auto odometer = std::make_shared<viso2_ros::StereoOdometer>(node);
   
-  exec.add_node(odometer);
+  exec.add_node(node);
 
   exec.spin();
   rclcpp::shutdown();

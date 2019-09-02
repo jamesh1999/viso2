@@ -38,11 +38,10 @@ public:
 
     // Read local parameters
     std::string transport = node_->declare_parameter("transport", "raw");
-    std::string image_topic = node_->declare_parameter("image_topic", "/image_rect");
     odometry_params::loadParams(node_, visual_odometer_params_);
     
     rmw_qos_profile_t custom_qos = rmw_qos_profile_default;
-    camera_sub_ = image_transport::create_camera_subscription(node_.get(), image_topic, [&](auto& image_msg, auto& camera_info_msg) { this->imageCallback(image_msg, camera_info_msg); }, transport, custom_qos);
+    camera_sub_ = image_transport::create_camera_subscription(node_.get(), "image", [&](auto& image_msg, auto& camera_info_msg) { this->imageCallback(image_msg, camera_info_msg); }, transport, custom_qos);
     info_pub_ = node_->create_publisher<viso2_ros::msg::VisoInfo>("info", 1);
   }
 
@@ -67,7 +66,7 @@ protected:
       visual_odometer_params_.calib.cv = model.cy();
       visual_odometer_.reset(new VisualOdometryMono(visual_odometer_params_));
       if (image_msg->header.frame_id != "") setSensorFrameId(image_msg->header.frame_id);
-      //RCLCPP_INFO(this->get_logger(), "Initialized libviso2 mono odometry with the following parameters: %s", visual_odometer_params_);
+      RCLCPP_INFO(node_->get_logger(), "Initialized libviso2 mono odometry with the following parameters: %s", visual_odometer_params_);
     }
 
     // convert image if necessary
