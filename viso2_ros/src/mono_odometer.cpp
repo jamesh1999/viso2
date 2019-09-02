@@ -35,6 +35,9 @@ public:
   OdometerBase(this->shared_from_this()),
   replace_(false)
   {
+    // FIXME this is probably not a good idea https://forum.libcinder.org/topic/solution-calling-shared-from-this-in-the-constructor
+    const auto trickDontRemove = std::shared_ptr<MonoOdometer>( this, [](MonoOdometer*){} );
+
     // Read local parameters
     odometry_params::loadParams(this->shared_from_this(), visual_odometer_params_);
     
