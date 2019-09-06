@@ -24,12 +24,14 @@ def generate_launch_description():
     ns = "/image"
 
     image_proc = launch_ros.actions.Node(
-            package='image_proc', node_executable='image_proc', output='screen')
+        package='image_proc', node_executable='image_proc', output='screen', parameters=[{"camera_namespace": ns}])
 
     mono_odometer = launch_ros.actions.Node(
-            package='viso2_ros', node_executable='mono_odometer', output='screen', remappings=[("image", f"{ns}/image_color_rect")],
-            parameters=[{"base_link_frame_id": ns, "camera_height": "1.00", "camera_pitch": "0.00"}]
-            )
+        package='viso2_ros', node_executable='mono_odometer', output='screen', node_namespace=ns,
+        remappings=[(f"{ns}/image", f"{ns}/image_color_rect")],
+        parameters=[{"base_link_frame_id": "image",
+                     "camera_height": 1.00, "camera_pitch": 0.00}]
+    )
 
     ld.add_action(image_proc)
     ld.add_action(mono_odometer)

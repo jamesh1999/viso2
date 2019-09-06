@@ -55,7 +55,7 @@ protected:
 
   void imageCallback(const sensor_msgs::msg::Image::ConstSharedPtr& image_msg)
   {
-    auto start_time = rclcpp::Clock().now();
+    auto start_time = node_->get_clock()->now();
  
     bool first_run = false;
     // create odometer if not exists

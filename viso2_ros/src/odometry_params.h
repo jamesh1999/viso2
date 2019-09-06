@@ -13,24 +13,25 @@ namespace odometry_params
 /// loads matcher params
 void loadParams(const rclcpp::Node::SharedPtr node, Matcher::parameters& params)
 {
-  node->declare_parameter("nms_n",                  params.nms_n);
-  node->declare_parameter("nms_tau",                params.nms_tau);
-  node->declare_parameter("match_binsize",          params.match_binsize);
-  node->declare_parameter("match_radius",           params.match_radius);
-  node->declare_parameter("match_disp_tolerance",   params.match_disp_tolerance);
-  node->declare_parameter("outlier_disp_tolerance", params.outlier_disp_tolerance);
-  node->declare_parameter("outlier_flow_tolerance", params.outlier_flow_tolerance);
-  node->declare_parameter("multi_stage",            params.multi_stage);
-  node->declare_parameter("half_resolution",        params.half_resolution);
-  node->declare_parameter("refinement",             params.refinement);
+  params.nms_n = node->declare_parameter("nms_n",                  params.nms_n);
+  params.nms_tau = node->declare_parameter("nms_tau",                params.nms_tau);
+  params.match_binsize = node->declare_parameter("match_binsize",          params.match_binsize);
+  params.match_radius = node->declare_parameter("match_radius",           params.match_radius);
+  params.match_disp_tolerance = node->declare_parameter("match_disp_tolerance",   params.match_disp_tolerance);
+  params.outlier_disp_tolerance = node->declare_parameter("outlier_disp_tolerance", params.outlier_disp_tolerance);
+  params.outlier_flow_tolerance = node->declare_parameter("outlier_flow_tolerance", params.outlier_flow_tolerance);
+  params.multi_stage = node->declare_parameter("multi_stage",            params.multi_stage);
+  params.half_resolution = node->declare_parameter("half_resolution",        params.half_resolution);
+  params.refinement = node->declare_parameter("refinement",             params.refinement);
+  std::cout << "Param half_resolution" << params.half_resolution << std::endl;
 }
 
 /// loads bucketing params
 void loadParams(const rclcpp::Node::SharedPtr node, VisualOdometry::bucketing& bucketing)
 {
-  node->declare_parameter("max_features",  bucketing.max_features);
-  node->declare_parameter("bucket_width",  bucketing.bucket_width);
-  node->declare_parameter("bucket_height", bucketing.bucket_height);
+  bucketing.max_features = node->declare_parameter("max_features",  bucketing.max_features);
+  bucketing.bucket_width = node->declare_parameter("bucket_width",  bucketing.bucket_width);
+  bucketing.bucket_height = node->declare_parameter("bucket_height", bucketing.bucket_height);
 }
 
 /// loads common odometry params
@@ -44,9 +45,9 @@ void loadCommonParams(const rclcpp::Node::SharedPtr node, VisualOdometry::parame
 void loadParams(const rclcpp::Node::SharedPtr node, VisualOdometryStereo::parameters& params)
 {
   loadCommonParams(node, params);
-  node->get_parameter("ransac_iters",     params.ransac_iters);
-  node->get_parameter("inlier_threshold", params.inlier_threshold);
-  node->get_parameter("reweighting",      params.reweighting);
+  params.ransac_iters = node->declare_parameter("ransac_iters",     params.ransac_iters);
+  params.inlier_threshold = node->declare_parameter("inlier_threshold", params.inlier_threshold);
+  params.reweighting = node->declare_parameter("reweighting",      params.reweighting);
 }
 
 /// loads common & mono specific params
@@ -61,18 +62,18 @@ void loadParams(const rclcpp::Node::SharedPtr node, VisualOdometryMono::paramete
   {
     RCLCPP_WARN(node->get_logger(), "Parameter 'camera_pitch' is required but not set. Using default: %f", params.pitch);
   }
-  node->get_parameter("ransac_iters",     params.ransac_iters);
-  node->get_parameter("inlier_threshold", params.inlier_threshold);
-  node->get_parameter("motion_threshold", params.motion_threshold);
+  params.ransac_iters = node->get_parameter("ransac_iters",     params.ransac_iters);
+  params.inlier_threshold = node->get_parameter("inlier_threshold", params.inlier_threshold);
+  params.motion_threshold = node->get_parameter("motion_threshold", params.motion_threshold);
 }
 
 /// loads common & omnidirectional mono specific params
 void loadParams(const rclcpp::Node::SharedPtr node, VisualOdometryMonoOmnidirectional::parameters& params)
 {
   loadCommonParams(node, params);
-  node->get_parameter("ransac_iters",     params.ransac_iters);
-  node->get_parameter("inlier_threshold", params.inlier_threshold);
-  node->get_parameter("motion_threshold", params.motion_threshold);
+  params.ransac_iters = node->declare_parameter("ransac_iters",     params.ransac_iters);
+  params.inlier_threshold = node->declare_parameter("inlier_threshold", params.inlier_threshold);
+  params.motion_threshold = node->declare_parameter("motion_threshold", params.motion_threshold);
 
   std::string path;
   node->get_parameter("calib_path", path);

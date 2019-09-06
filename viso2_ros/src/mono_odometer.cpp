@@ -50,8 +50,8 @@ protected:
       const sensor_msgs::msg::Image::ConstSharedPtr& image_msg,
       const sensor_msgs::msg::CameraInfo::ConstSharedPtr& info_msg)
   {
-    auto start_time = rclcpp::Clock().now();
- 
+    auto start_time = node_->get_clock()->now();
+
     bool first_run = false;
     // create odometer if not exists
     if (!visual_odometer_)
@@ -65,7 +65,9 @@ protected:
       visual_odometer_params_.calib.cu = model.cx();
       visual_odometer_params_.calib.cv = model.cy();
       visual_odometer_.reset(new VisualOdometryMono(visual_odometer_params_));
-      if (image_msg->header.frame_id != "") setSensorFrameId(image_msg->header.frame_id);
+      if (image_msg->header.frame_id != "") {
+        setSensorFrameId(image_msg->header.frame_id);
+      }
       RCLCPP_INFO(node_->get_logger(), "Initialized libviso2 mono odometry with the following parameters: %s", visual_odometer_params_);
     }
 
@@ -133,7 +135,7 @@ protected:
       info_msg.change_reference_frame = false;
       info_msg.num_matches = visual_odometer_->getNumberOfMatches();
       info_msg.num_inliers = visual_odometer_->getNumberOfInliers();
-      auto time_elapsed = rclcpp::Clock().now() - start_time;
+      auto time_elapsed = node_->get_clock()->now() - start_time;
       info_msg.runtime = time_elapsed.seconds();
       info_pub_->publish(info_msg);
     }

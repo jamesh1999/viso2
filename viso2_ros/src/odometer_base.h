@@ -60,9 +60,9 @@ public:
   {
     node_ = node;
     // Read local parameters
-    odom_frame_id_ = node_->declare_parameter("odom_frame_id", "/odom");
-    base_link_frame_id_ = node_->declare_parameter("base_link_frame_id", "/base_link");
-    sensor_frame_id_ = node_->declare_parameter("sensor_frame_id", "/camera");
+    odom_frame_id_ = node_->declare_parameter("odom_frame_id", "odom");
+    base_link_frame_id_ = node_->declare_parameter("base_link_frame_id", "base_link");
+    sensor_frame_id_ = node_->declare_parameter("sensor_frame_id", "camera");
     publish_tf_ = node_->declare_parameter("publish_tf", true);
     invert_tf_ = node_->declare_parameter("invert_tf", false);
 
@@ -75,6 +75,7 @@ public:
     reset_service_ = node_->create_service<std_srvs::srv::Empty>("reset_pose", std::bind(&OdometerBase::resetPose, this, std::placeholders::_1, std::placeholders::_2));
 
     integrated_pose_.setIdentity();
+    last_update_time_ = node_->get_clock()->now();
 
     pose_covariance_.fill(0.0);
     twist_covariance_.fill(0.0);

@@ -130,7 +130,7 @@ protected:
       const sensor_msgs::msg::CameraInfo::ConstSharedPtr l_info_msg,
       const sensor_msgs::msg::CameraInfo::ConstSharedPtr r_info_msg)
   {
-    auto start_time = rclcpp::Clock().now();
+    auto start_time = node_->get_clock()->now();
     bool first_run = false;
     // create odometer if not exists
     if (!visual_odometer_)
@@ -263,7 +263,7 @@ protected:
       info_msg.change_reference_frame = !change_reference_frame_;
       info_msg.num_matches = visual_odometer_->getNumberOfMatches();
       info_msg.num_inliers = visual_odometer_->getNumberOfInliers();
-      rclcpp::Duration time_elapsed = rclcpp::Clock().now() - start_time;
+      rclcpp::Duration time_elapsed = node_->get_clock()->now() - start_time;
       info_msg.runtime = time_elapsed.seconds();
       info_pub_->publish(info_msg);
     }
