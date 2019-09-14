@@ -23,7 +23,6 @@ void loadParams(const rclcpp::Node::SharedPtr node, Matcher::parameters& params)
   params.multi_stage = node->declare_parameter("multi_stage",            params.multi_stage);
   params.half_resolution = node->declare_parameter("half_resolution",        params.half_resolution);
   params.refinement = node->declare_parameter("refinement",             params.refinement);
-  std::cout << "Param half_resolution" << params.half_resolution << std::endl;
 }
 
 /// loads bucketing params

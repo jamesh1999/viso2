@@ -129,6 +129,7 @@ protected:
 
       // create and publish viso2 info msg
       viso2_ros::msg::VisoInfo info_msg;
+      info_msg.header.frame_id = image_msg->header.frame_id;
       info_msg.header.stamp = image_msg->header.stamp;
       info_msg.got_lost = !success;
       info_msg.change_reference_frame = false;
