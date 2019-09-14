@@ -176,8 +176,9 @@ void Matcher::pushBack (uint8_t *I1,uint8_t* I2,int32_t* dims,const bool replace
 
   // compute new features for current frame
   computeFeatures(I1c,dims_c,m1c1,n1c1,m1c2,n1c2,I1c_du,I1c_dv,I1c_du_full,I1c_dv_full);
-  if (I2!=0)
+  if (I2!=0) {
     computeFeatures(I2c,dims_c,m2c1,n2c1,m2c2,n2c2,I2c_du,I2c_dv,I2c_du_full,I2c_dv_full);
+  }
 }
 
 void Matcher::matchFeatures(int32_t method, Matrix *Tr_delta) {

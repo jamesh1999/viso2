@@ -126,8 +126,7 @@ protected:
     geometry_msgs::msg::TransformStamped base_to_sensor;
     tf2::Stamped<tf2::Transform> base_to_sensor_tf;
 
-    tf2::TimePoint time_point = tf2::TimePoint(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(timestamp.nanoseconds())));
-
+    tf2::TimePoint time_point = tf2::timeFromSec(timestamp.seconds());
     std::string error_msg;
     if (tf_buffer_.canTransform(base_link_frame_id_, sensor_frame_id_, time_point, &error_msg))
     {

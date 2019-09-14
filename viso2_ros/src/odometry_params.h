@@ -62,9 +62,9 @@ void loadParams(const rclcpp::Node::SharedPtr node, VisualOdometryMono::paramete
   {
     RCLCPP_WARN(node->get_logger(), "Parameter 'camera_pitch' is required but not set. Using default: %f", params.pitch);
   }
-  params.ransac_iters = node->get_parameter("ransac_iters",     params.ransac_iters);
-  params.inlier_threshold = node->get_parameter("inlier_threshold", params.inlier_threshold);
-  params.motion_threshold = node->get_parameter("motion_threshold", params.motion_threshold);
+  params.ransac_iters = node->declare_parameter("ransac_iters",     params.ransac_iters);
+  params.inlier_threshold = node->declare_parameter("inlier_threshold", params.inlier_threshold);
+  params.motion_threshold = node->declare_parameter("motion_threshold", params.motion_threshold);
 }
 
 /// loads common & omnidirectional mono specific params

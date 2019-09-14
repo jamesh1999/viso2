@@ -37,12 +37,11 @@ public:
     node_ = node;
 
     // Read local parameters
-    std::string transport = node_->declare_parameter("transport", "raw");
-    odometry_params::loadParams(node_, visual_odometer_params_);
-    
-    rmw_qos_profile_t custom_qos = rmw_qos_profile_default;
-    camera_sub_ = image_transport::create_camera_subscription(node_.get(), "image", [&](auto& image_msg, auto& camera_info_msg) { this->imageCallback(image_msg, camera_info_msg); }, transport, custom_qos);
-    info_pub_ = node_->create_publisher<viso2_ros::msg::VisoInfo>("info", 1);
+    std::string transport = node->declare_parameter("transport", "raw");
+    odometry_params::loadParams(node, visual_odometer_params_);
+    camera_sub_ = image_transport::create_camera_subscription(node.get(), "image", std::bind(&MonoOdometer::imageCallback, this, std::placeholders::_1, std::placeholders::_2), transport);
+
+    info_pub_ = node->create_publisher<viso2_ros::msg::VisoInfo>("info", 1);
   }
 
 protected:
