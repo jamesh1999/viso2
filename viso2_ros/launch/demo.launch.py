@@ -29,8 +29,11 @@ def generate_launch_description():
     mono_odometer = launch_ros.actions.Node(
         package='viso2_ros', node_executable='mono_odometer', output='screen', node_namespace=ns,
         remappings=[(f"{ns}/image", f"{ns}/image_color_rect")],
-        parameters=[{"base_link_frame_id": "image",
-                     "camera_height": 1.00, "camera_pitch": 0.00}]
+        parameters=[{
+            "odom_frame_id": "odom",
+            "base_link_frame_id": "camera",
+            "camera_height": 1.00, 
+            "camera_pitch": 0.00}]
     )
 
     ld.add_action(image_proc)
