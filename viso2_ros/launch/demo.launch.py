@@ -14,7 +14,6 @@ from launch import LaunchService
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
 
-from launch_ros import get_default_launch_description
 import launch_ros.actions
 
 
@@ -24,10 +23,10 @@ def generate_launch_description():
     ns = "/image"
 
     image_proc = launch_ros.actions.Node(
-        package='image_proc', node_executable='image_proc', output='screen', parameters=[{"camera_namespace": ns}])
+        package='image_proc', executable='image_proc', output='screen', parameters=[{"camera_namespace": ns}])
 
     mono_odometer = launch_ros.actions.Node(
-        package='viso2_ros', node_executable='mono_odometer', output='screen', node_namespace=ns,
+        package='viso2_ros', executable='mono_odometer', output='screen', namespace=ns,
         remappings=[(f"{ns}/image", f"{ns}/image_color_rect")],
         parameters=[{
             "odom_frame_id": "odom",
@@ -57,7 +56,6 @@ def main(argv=sys.argv[1:]):
 
     #ls = LaunchService(debug=True)
     ls = LaunchService()
-    ls.include_launch_description(get_default_launch_description())
     ls.include_launch_description(ld)
     return ls.run()
 

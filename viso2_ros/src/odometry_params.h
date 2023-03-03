@@ -1,4 +1,5 @@
 #include <rclcpp/rclcpp.hpp>
+#include <rclcpp/parameter_value.hpp>
 
 #include <viso_stereo.h>
 #include <viso_mono.h>
@@ -53,10 +54,13 @@ void loadParams(const rclcpp::Node::SharedPtr node, VisualOdometryStereo::parame
 void loadParams(const rclcpp::Node::SharedPtr node, VisualOdometryMono::parameters& params)
 {
   loadCommonParams(node, params);
+  node->declare_parameter("camera_height", rclcpp::ParameterType::PARAMETER_DOUBLE);
   if (!node->get_parameter("camera_height", params.height))
   {
     RCLCPP_WARN(node->get_logger(), "Parameter 'camera_height' is required but not set. Using default: %f", params.height);
   }
+
+  node->declare_parameter("camera_pitch", rclcpp::ParameterType::PARAMETER_DOUBLE);
   if (!node->get_parameter("camera_pitch", params.pitch))
   {
     RCLCPP_WARN(node->get_logger(), "Parameter 'camera_pitch' is required but not set. Using default: %f", params.pitch);
