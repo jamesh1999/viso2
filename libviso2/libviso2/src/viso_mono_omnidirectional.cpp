@@ -469,10 +469,10 @@ void VisualOdometryMonoOmnidirectional::cam2world(double point3D[3], double poin
   double e       = param.omnidirectional_calib.e;
   int length_pol = param.omnidirectional_calib.length_pol;
 
-  double invdet  = 1/(c-d*e); // 1/det(A), where A = [c,d;e,1] as in the Matlab file
+  // double invdet  = 1/(c-d*e); // 1/det(A), where A = [c,d;e,1] as in the Matlab file
 
-  double xp = invdet*(    (point2D[0] - xc) - d*(point2D[1] - yc) );
-  double yp = invdet*( -e*(point2D[0] - xc) + c*(point2D[1] - yc) );
+  // double xp = invdet*(    (point2D[0] - xc) - d*(point2D[1] - yc) );
+  // double yp = invdet*( -e*(point2D[0] - xc) + c*(point2D[1] - yc) );
  
   // double r   = sqrt(  xp*xp + yp*yp ); //distance [pixels] of  the point from the image center
   // double zp  = pol[0];
@@ -486,8 +486,8 @@ void VisualOdometryMonoOmnidirectional::cam2world(double point3D[3], double poin
 
   double fov = param.omnidirectional_calib.pol[0];
 
-  xp /= param.omnidirectional_calib.width;
-  yp /= param.omnidirectional_calib.width;
+  double xp = (double)(point2D[0] - xc) / param.omnidirectional_calib.width;
+  double yp = (double)(point2D[1] - yc) / param.omnidirectional_calib.width;
   xp -= 0.5;
   yp -= 0.5;
 
