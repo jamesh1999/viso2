@@ -418,28 +418,40 @@ void VisualOdometryMonoOmnidirectional::world2cam(double point2D[2], double poin
   int length_invpol  = param.omnidirectional_calib.length_invpol;
 
   double norm        = sqrt(point3D[0]*point3D[0] + point3D[1]*point3D[1]);
-  double theta       = atan(point3D[2]/norm);
+  double theta       = atan(norm / point3D[2]);
   double t, t_i;
   double rho, x, y;
   double invnorm;
   int i;
 
-  if (norm != 0) {
-    invnorm = 1/norm;
-    t  = theta;
-    rho = invpol[0];
-    t_i = 1;
+  if (norm < 0.00001) {
+    // invnorm = 1/norm;
+    // t  = theta;
+    // rho = invpol[0];
+    // t_i = 1;
 
-    for (i = 1; i < length_invpol; i++) {
-      t_i *= t;
-      rho += t_i*invpol[i];
-    }
+    // for (i = 1; i < length_invpol; i++) {
+    //   t_i *= t;
+    //   rho += t_i*invpol[i];
+    // }
 
-    x = point3D[0]*invnorm*rho;
-    y = point3D[1]*invnorm*rho;
+    // x = point3D[0]*invnorm*rho;
+    // y = point3D[1]*invnorm*rho;
 
-    point2D[0] = x*c + y*d + xc;
-    point2D[1] = x*e + y   + yc;
+    // point2D[0] = x*c + y*d + xc;
+    // point2D[1] = x*e + y   + yc;
+
+    double fov = param.omnidirectional_calib.pol[0];
+    double r = theta / fov / norm;
+
+    double xp = point3D[0];
+    double yp = point3D[1];
+
+    xp *= r;
+    yp *= r;
+
+    point2D[0] = param.omnidirectional_calib.width * xp + xc;
+    point2D[1] = param.omnidirectional_calib.width * yp + yc;
   }
   else {
     point2D[0] = xc;
@@ -462,15 +474,29 @@ void VisualOdometryMonoOmnidirectional::cam2world(double point3D[3], double poin
   double xp = invdet*(    (point2D[0] - xc) - d*(point2D[1] - yc) );
   double yp = invdet*( -e*(point2D[0] - xc) + c*(point2D[1] - yc) );
  
-  double r   = sqrt(  xp*xp + yp*yp ); //distance [pixels] of  the point from the image center
-  double zp  = pol[0];
-  double r_i = 1;
-  int i;
+  // double r   = sqrt(  xp*xp + yp*yp ); //distance [pixels] of  the point from the image center
+  // double zp  = pol[0];
+  // double r_i = 1;
+  // int i;
 
-  for (i = 1; i < length_pol; i++) {
-    r_i *= r;
-    zp  += r_i*pol[i];
-  }
+  // for (i = 1; i < length_pol; i++) {
+  //   r_i *= r;
+  //   zp  += r_i*pol[i];
+  // }
+
+  double fov = param.omnidirectional_calib.pol[0];
+
+  xp /= param.omnidirectional_calib.width;
+  yp /= param.omnidirectional_calib.width;
+  xp -= 0.5;
+  yp -= 0.5;
+
+  double r = sqrt(  xp*xp + yp*yp );
+  double theta = r * fov;
+
+  xp *= sin(theta) / r;
+  yp *= sin(theta) / r;
+  double zp = cos(theta);
 
   //normalize to unit norm
   double invnorm = 1/sqrt( xp*xp + yp*yp + zp*zp );
