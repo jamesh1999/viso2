@@ -493,7 +493,7 @@ void VisualOdometryMonoOmnidirectional::cam2world(double point3D[3], double poin
 
   double r = sqrt(  xp*xp + yp*yp );
   double theta = r * fov;
-  if theta > PI: theta = PI;
+  if (theta > PI) theta = PI;
 
   xp *= sin(theta) / r;
   yp *= sin(theta) / r;
