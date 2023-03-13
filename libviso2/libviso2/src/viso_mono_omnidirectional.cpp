@@ -418,7 +418,7 @@ void VisualOdometryMonoOmnidirectional::world2cam(double point2D[2], double poin
   int length_invpol  = param.omnidirectional_calib.length_invpol;
 
   double norm        = sqrt(point3D[0]*point3D[0] + point3D[1]*point3D[1]);
-  double theta       = atan(norm / point3D[2]);
+  double theta       = atan2(norm, point3D[2]);
   double t, t_i;
   double rho, x, y;
   double invnorm;
@@ -442,7 +442,7 @@ void VisualOdometryMonoOmnidirectional::world2cam(double point2D[2], double poin
     // point2D[1] = x*e + y   + yc;
 
     double fov = param.omnidirectional_calib.pol[0];
-    double r = theta / fov / norm;
+    double r = (theta / fov) / norm;
 
     double xp = point3D[0];
     double yp = point3D[1];
