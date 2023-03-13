@@ -20,6 +20,9 @@ Street, Fifth Floor, Boston, MA 02110-1301, USA
 
 #include "viso_mono_omnidirectional.h"
 
+#define PI 3.14159265
+
+
 using namespace std;
 
 VisualOdometryMonoOmnidirectional::VisualOdometryMonoOmnidirectional (parameters param) : VisualOdometry((VisualOdometry::parameters)param), param(param) {}
@@ -424,7 +427,7 @@ void VisualOdometryMonoOmnidirectional::world2cam(double point2D[2], double poin
   double invnorm;
   int i;
 
-  if (norm < 0.00001) {
+  if (norm < 0.00000001) {
     // invnorm = 1/norm;
     // t  = theta;
     // rho = invpol[0];
@@ -452,8 +455,7 @@ void VisualOdometryMonoOmnidirectional::world2cam(double point2D[2], double poin
 
     point2D[0] = param.omnidirectional_calib.width * xp + xc;
     point2D[1] = param.omnidirectional_calib.width * yp + yc;
-  }
-  else {
+  } else {
     point2D[0] = xc;
     point2D[1] = yc;
   }
@@ -491,6 +493,7 @@ void VisualOdometryMonoOmnidirectional::cam2world(double point3D[3], double poin
 
   double r = sqrt(  xp*xp + yp*yp );
   double theta = r * fov;
+  if theta > PI: theta = PI;
 
   xp *= sin(theta) / r;
   yp *= sin(theta) / r;
