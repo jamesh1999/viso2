@@ -488,8 +488,6 @@ void VisualOdometryMonoOmnidirectional::cam2world(double point3D[3], double poin
 
   double xp = (double)(point2D[0] - xc) / param.omnidirectional_calib.width;
   double yp = (double)(point2D[1] - yc) / param.omnidirectional_calib.width;
-  xp -= 0.5;
-  yp -= 0.5;
 
   double r = sqrt(  xp*xp + yp*yp );
   double theta = r * fov;
